@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>မြန်မာနိုင်ငံ စစ်ဂိမ်း - ကုန်းသိမ်းတိုက်ပွဲ</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+    body {
+      margin: 0;
+      background: #0f1712;
+      color: #f8fafc;
+      font-family: -apple-system, BlinkMacSystemFont, "Pyidaungsu", "Myanmar Text", sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 100vh;
+      padding: 8px 10px 12px;
+      overflow: hidden;
+    }
+    .top-bar {
+      width: 100%;
+      max-width: 440px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+      background: rgba(15, 23, 42, 0.85);
+      padding: 8px 12px;
+      border-radius: 12px;
+      border: 1px solid #3f6212;
+      font-size: 13px;
+      font-weight: bold;
+    }
+    .sound-btn {
+      background: #1e293b;
+      color: #f8fafc;
+      border: 1px solid #475569;
+      border-radius: 8px;
+      padding: 4px 8px;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .game-wrap {
+      position: relative;
+      width: 100%;
+      max-width: 440px;
+      height: 60vh;
+      min-height: 360px;
+      background: linear-gradient(180deg, #102438 0%, #1d3c2b 52%, #4a3a25 100%);
+      border: 2px solid #4d7c0f;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 12px 28px rgba(0,0,0,0.65);
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    .banner {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.72);
+      border: 1px solid #84cc16;
+      color: #bef264;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: bold;
+      white-space: nowrap;
+      z-index: 5;
+      pointer-events: none;
+    }
+    .overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(9, 15, 11, 0.9);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 20px;
+      z-index: 20;
+    }
+    .overlay h1 {
+      margin: 0 0 10px;
+      font-size: 22px;
+      color: #a3e635;
+    }
+    .overlay p {
+      margin: 0 0 18px;
+      font-size: 13.5px;
+      line-height: 1.75;
+      color: #e2e8f0;
+    }
+    .action-btn {
+      background: #4d7c0f;
+      color: #fff;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(77, 124, 15, 0.5);
+      font-family: inherit;
+    }
+    .flag-btn {
+      background: #dc2626;
+      box-shadow: 0 4px 14px rgba(220, 38, 38, 0.55);
+      animation: pulse 1s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    .controls {
+      width: 100%;
+      max-width: 440px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1.35fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .ctrl-btn {
+      border: none;
+      border-radius: 14px;
+      padding: 14px 8px;
+      font-size: 17px;
+      font-weight: bold;
+      color: #fff;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .move-btn {
+      background: #334155;
+      border-bottom: 4px solid #1e293b;
+    }
+    .move-btn:active {
+      transform: translateY(2px);
+    }
+    .fire-btn {
+      background: #dc2626;
+      border-bottom: 4px solid #991b1b;
+    }
+    .fire-btn:active {
+      transform: translateY(2px);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="top-bar">
+    <div>အမှတ်: <span id="score">0</span> / <span id="targetScore">150</span></div>
+    <div>အသက်: <span id="lives">❤️❤️❤️</span></div>
+    <button class="sound-btn" id="soundBtn">🔊 အသံဖွင့်</button>
+  </div>
+
+  <div class="game-wrap" id="gameWrap">
+    <div class="banner" id="statusBanner">ကုန်းအမှတ် ၁ - ရှေ့တန်းတိုက်ပွဲ</div>
+    <canvas id="gameCanvas"></canvas>
+
+    <div class="overlay" id="overlay">
+      <h1>🪖 ကုန်းသိမ်းတိုက်ပွဲ</h1>
+      <p>
+        ကိုယ်က <b>PDF</b> တိုက်ခိုက်ရေးသမားအနေနဲ့ သေနတ်နဲ့ ပစ်ခတ်ပါ။<br/>
+        <b>PDF ဒရုန်း</b> က အပေါ်ကနေ ဗုံးချတိုက်ခိုက်ပေးပါမယ်။<br/>
+        <b>ရန်သူစစ်သား</b>၊ <b>ဘန်ကာ</b> နဲ့ <b>လေယာဉ်ဗုံး</b> တွေကို ရှောင်ပြီး ပစ်ချပါ!<br/>
+        အမှတ်ပြည့်ရင် <b>စစ်တပ်ကုန်းကို သိမ်းပြီး အလံစိုက်</b> နိုင်ပါမယ်!
+      </p>
+      <button class="action-btn" id="startBtn">တိုက်ပွဲစတင်မည်</button>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="ctrl-btn move-btn" id="leftBtn">◀ ဘယ်</button>
+    <button class="ctrl-btn move-btn" id="rightBtn">ညာ ▶</button>
+    <button class="ctrl-btn fire-btn" id="fireBtn">🔫 ပစ်မည်</button>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const gameWrap = document.getElementById("gameWrap");
+    const overlay = document.getElementById("overlay");
+    const startBtn = document.getElementById("startBtn");
+    const scoreEl = document.getElementById("score");
+    const targetScoreEl = document.getElementById("targetScore");
+    const livesEl = document.getElementById("lives");
+    const soundBtn = document.getElementById("soundBtn");
+    const statusBanner = document.getElementById("statusBanner");
+
+    const leftBtn = document.getElementById("leftBtn");
+    const rightBtn = document.getElementById("rightBtn");
+    const fireBtn = document.getElementById("fireBtn");
+
+    // Web Audio အသံစနစ် (အင်တာနက်မလိုဘဲ သေနတ်သံ၊ ပေါက်ကွဲသံ ထွက်စေရန်)
+    let audioCtx = null;
+    let soundEnabled = true;
+
+    function initAudio() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) audioCtx = new AudioContext();
+      }
+      if (audioCtx && audioCtx.state === "suspended") {
+        audioCtx.resume();
+      }
+    }
+
+    function playGunSound() {
+      if (!soundEnabled || !audioCtx) return;
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(240, now);
+      osc.frequency.exponentialRampToValueAtTime(55, now + 0.08);
+      gain.gain.setValueAtTime(0.14, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.08);
+    }
+
+    function playExplosionSound() {
+      if (!soundEnabled || !audioCtx) return;
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = "square";
+      osc.frequency.setValueAtTime(130, now);
+      osc.frequency.exponentialRampToValueAtTime(28, now + 0.25);
+      gain.gain.setValueAtTime(0.22, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.25);
+    }
+
+    function playVictorySound() {
+      if (!soundEnabled || !audioCtx) return;
+      const notes = [440, 554.37, 659.25, 880];
+      notes.forEach((freq, idx) => {
+        const now = audioCtx.currentTime + idx * 0.12;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(freq, now);
+        gain.gain.setValueAtTime(0.16, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.22);
+      });
+    }
+
+    soundBtn.addEventListener("click", () => {
+      initAudio();
+      soundEnabled = !soundEnabled;
+      soundBtn.textContent = soundEnabled ? "🔊 အသံဖွင့်" : "🔇 အသံပိတ်";
+    });
+
+    let width, height;
+    const pdfPlayer = { x: 180, y: 320, speed: 5.5 };
+    const pdfDrone = { x: 120, y: 72, vx: 2.3, bombTimer: 0 };
+
+    function resizeCanvas() {
+      width = canvas.width = gameWrap.clientWidth;
+      height = canvas.height = gameWrap.clientHeight;
+      pdfPlayer.x = Math.min(Math.max(pdfPlayer.x, 24), width - 24);
+      pdfPlayer.y = height - 46;
+      pdfDrone.y = 72;
+    }
+
+    let gameRunning = false;
+    let canPlantFlag = false;
+    let hillCount = 1;
+    let score = 0;
+    let targetScore = 150;
+    let lives = 3;
+    let moveLeft = false;
+    let moveRight = false;
+    let lastShot = 0;
+    let spawnTimer = 0;
+    let planeTimer = 0;
+
+    let bullets = [];
+    let droneBombs = [];
+    let enemyBombs = [];
+    let enemies = [];
+    let explosions = [];
+
+    resizeCanvas();
+    window.addEventListener("resize", resizeCanvas);
+
+    function updateHud() {
+      scoreEl.textContent = score;
+      targetScoreEl.textContent = targetScore;
+      livesEl.textContent = "❤️".repeat(Math.max(0, lives)) || "💔";
+    }
+
+    function addExplosion(x, y, color = "#fb923c") {
+      for (let i = 0; i < 12; i++) {
+        const angle = (Math.PI * 2 * i) / 12 + Math.random() * 0.3;
+        const spd = 1.5 + Math.random() * 3.5;
+        explosions.push({
+          x, y,
+          vx: Math.cos(angle) * spd,
+          vy: Math.sin(angle) * spd,
+          life: 22,
+          color
+        });
+      }
+      playExplosionSound();
+    }
+
+    function startGame() {
+      initAudio();
+      score = 0;
+      lives = 3;
+      canPlantFlag = false;
+      bullets = [];
+      droneBombs = [];
+      enemyBombs = [];
+      enemies = [];
+      explosions = [];
+      pdfPlayer.x = width / 2;
+      pdfPlayer.y = height - 46;
+      pdfDrone.x = width / 2;
+      pdfDrone.y = 72;
+      pdfDrone.bombTimer = 0;
+      spawnTimer = 0;
+      planeTimer = 0;
+      gameRunning = true;
+      overlay.style.display = "none";
+      statusBanner.textContent = `ကုန်းအမှတ် ${hillCount} - တိုက်ပွဲစတင်ပြီ`;
+      updateHud();
+      requestAnimationFrame(gameLoop);
+    }
+
+    function playerShoot() {
+      if (!gameRunning) return;
+      initAudio();
+      const now = Date.now();
+      if (now - lastShot < 185) return;
+      lastShot = now;
+      bullets.push({
+        x: pdfPlayer.x,
+        y: pdfPlayer.y - 28,
+        r: 4.5,
+        speed: 9.5
+      });
+      playGunSound();
+    }
+
+    function spawnEnemyEntity() {
+      const roll = Math.random();
+      const speedBoost = Math.min(score / 140, 2.0);
+
+      if (roll < 0.55) {
+        // ရန်သူစစ်သား
+        enemies.push({
+          type: "soldier",
+          x: 28 + Math.random() * (width - 56),
+          y: -26,
+          vx: 0,
+          r: 19,
+          hp: 1,
+          speed: 1.6 + Math.random() * 1.0 + speedBoost,
+          points: 15,
+          label: "ရန်သူစစ်သား",
+          color: "#b91c1c"
+        });
+      } else {
+        // ရန်သူဘန်ကာ (ခံနိုင်ရည် ၂ ချက်)
+        enemies.push({
+          type: "bunker",
+          x: 40 + Math.random() * (width - 80),
+          y: -34,
+          vx: 0,
+          w: 54,
+          h: 34,
+          r: 25,
+          hp: 2,
+          speed: 1.15 + Math.random() * 0.6 + speedBoost * 0.6,
+          points: 30,
+          label: "ရန်သူဘန်ကာ",
+          color: "#57534e"
+        });
+      }
+    }
+
+    function spawnEnemyPlane() {
+      // စစ်တပ်လေယာဉ် ဖြတ်ပျံပြီး ဗုံးကြဲခြင်း
+      const fromLeft = Math.random() < 0.5;
+      enemies.push({
+        type: "plane",
+        x: fromLeft ? -35 : width + 35,
+        y: 36 + Math.random() * 55,
+        vx: fromLeft ? 2.6 + Math.random() : -(2.6 + Math.random()),
+        vy: 0.35,
+        r: 22,
+        hp: 1,
+        points: 35,
+        label: "စစ်တပ်လေယာဉ်",
+        color: "#7c3aed",
+        droppedBomb: false
+      });
+    }
+
+    function drawPdfPlayer() {
+      ctx.fillStyle = "#15803d";
+      ctx.beginPath();
+      ctx.arc(pdfPlayer.x, pdfPlayer.y, 16, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = "#bef264";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // သေနတ်ပြောင်း
+      ctx.fillStyle = "#0f172a";
+      ctx.fillRect(pdfPlayer.x - 3, pdfPlayer.y - 32, 6, 18);
+
+      ctx.fillStyle = "#dcfce7";
+      ctx.font = "bold 11px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("PDF", pdfPlayer.x, pdfPlayer.y + 27);
+    }
+
+    function drawPdfDrone() {
+      ctx.strokeStyle = "#86efac";
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(pdfDrone.x - 22, pdfDrone.y - 5);
+      ctx.lineTo(pdfDrone.x + 22, pdfDrone.y - 5);
+      ctx.stroke();
+
+      ctx.fillStyle = "#16a34a";
+      ctx.beginPath();
+      ctx.arc(pdfDrone.x, pdfDrone.y, 13, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#f0fdf4";
+      ctx.font = "bold 10px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("PDF ဒရုန်း", pdfDrone.x, pdfDrone.y - 19);
+    }
+
+    function drawBulletsAndBombs() {
+      // ကိုယ့်ကျည်ဆန်
+      ctx.fillStyle = "#fde047";
+      for (const b of bullets) {
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // PDF ဒရုန်းဗုံး
+      for (const db of droneBombs) {
+        ctx.fillStyle = "#4ade80";
+        ctx.beginPath();
+        ctx.arc(db.x, db.y, 6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // စစ်တပ်လေယာဉ်ဗုံး
+      for (const eb of enemyBombs) {
+        ctx.fillStyle = "#f87171";
+        ctx.beginPath();
+        ctx.arc(eb.x, eb.y, 6.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function drawEnemies() {
+      for (const e of enemies) {
+        if (e.type === "bunker") {
+          ctx.fillStyle = e.color;
+          ctx.fillRect(e.x - e.w / 2, e.y - e.h / 2, e.w, e.h);
+          ctx.strokeStyle = "#d6d3d1";
+          ctx.lineWidth = 2;
+          ctx.strokeRect(e.x - e.w / 2, e.y - e.h / 2, e.w, e.h);
+
+          ctx.fillStyle = "#fef08a";
+          ctx.font = "bold 10px sans-serif";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(e.hp > 1 ? "ဘန်ကာ (၂)" : "ဘန်ကာ (၁)", e.x, e.y);
+        } else if (e.type === "plane") {
+          ctx.fillStyle = e.color;
+          ctx.beginPath();
+          ctx.moveTo(e.x + (e.vx > 0 ? 22 : -22), e.y);
+          ctx.lineTo(e.x - 14, e.y - 14);
+          ctx.lineTo(e.x - 14, e.y + 14);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.fillStyle = "#ede9fe";
+          ctx.font = "bold 10px sans-serif";
+          ctx.textAlign = "center";
+          ctx.fillText(e.label, e.x, e.y - 20);
+        } else {
+          ctx.fillStyle = e.color;
+          ctx.beginPath();
+          ctx.arc(e.x, e.y, e.r, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.strokeStyle = "#fecaca";
+          ctx.lineWidth = 2;
+          ctx.stroke();
+
+          ctx.fillStyle = "#fff";
+          ctx.font = "bold 10px sans-serif";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText("ရန်သူ", e.x, e.y);
+        }
+      }
+    }
+
+    function drawExplosions() {
+      for (let i = explosions.length - 1; i >= 0; i--) {
+        const ex = explosions[i];
+        ex.x += ex.vx;
+        ex.y += ex.vy;
+        ex.life--;
+        ctx.fillStyle = ex.color;
+        ctx.globalAlpha = Math.max(0, ex.life / 22);
+        ctx.beginPath();
+        ctx.arc(ex.x, ex.y, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        if (ex.life <= 0) explosions.splice(i, 1);
+      }
+    }
+
+    function triggerCaptureHill() {
+      gameRunning = false;
+      canPlantFlag = true;
+      playVictorySound();
+      overlay.style.display = "flex";
+      overlay.innerHTML = `
+        <h1>🚩 စစ်တပ်ကုန်း သိမ်းနိုင်ပြီ!</h1>
+        <p>
+          ကုန်းအမှတ် <b>${hillCount}</b> ကို အောင်မြင်စွာ သိမ်းပိုက်နိုင်ခဲ့ပါပြီ!<br/>
+          အခု ကုန်းပေါ်မှာ <b>အလံစိုက်</b> ပြီး အောင်ပွဲခံလိုက်ပါ!
+        </p>
+        <button class="action-btn flag-btn" id="plantFlagBtn">🚩 အလံစိုက်မည်</button>
+      `;
+      document.getElementById("plantFlagBtn").addEventListener("click", () => {
+        playVictorySound();
+        hillCount++;
+        targetScore += 100;
+        overlay.innerHTML = `
+          <h1>🎉 အလံစိုက်ပြီးပါပြီ!</h1>
+          <p>
+            ကုန်းပေါ်မှာ အလံစိုက်နိုင်ခဲ့ပြီ ဖြစ်ပါတယ်!<br/>
+            ဆက်ပြီး <b>ကုန်းအမှတ် ${hillCount}</b> ကို ဆက်သိမ်းမလား?
+          </p>
+          <button class="action-btn" id="nextHillBtn">ဆက်တိုက်မည် (ကုန်း ${hillCount})</button>
+        `;
+        document.getElementById("nextHillBtn").addEventListener("click", startGame);
+      });
+    }
+
+    function triggerGameOver() {
+      gameRunning = false;
+      overlay.style.display = "flex";
+      overlay.innerHTML = `
+        <h1>💥 ကျဆုံးသွားပါပြီ</h1>
+        <p>
+          ရရှိသော အမှတ်: <b>${score}</b> / ${targetScore}<br/>
+          ပြန်လည်တိုက်ပွဲဝင်ချင်ရင် နှိပ်ပါ။
+        </p>
+        <button class="action-btn" id="retryBtn">ပြန်ဆော့မည်</button>
+      `;
+      document.getElementById("retryBtn").addEventListener("click", startGame);
+    }
+
+    function gameLoop() {
+      if (!gameRunning) return;
+
+      ctx.clearRect(0, 0, width, height);
+
+      if (moveLeft) pdfPlayer.x -= pdfPlayer.speed;
+      if (moveRight) pdfPlayer.x += pdfPlayer.speed;
+      pdfPlayer.x = Math.min(Math.max(pdfPlayer.x, 22), width - 22);
+
+      // PDF ဒရုန်း ပျံသန်းပြီး ဗုံးချခြင်း
+      pdfDrone.x += pdfDrone.vx;
+      if (pdfDrone.x < 30 || pdfDrone.x > width - 30) {
+        pdfDrone.vx *= -1;
+      }
+      pdfDrone.bombTimer++;
+      if (pdfDrone.bombTimer > 85) {
+        pdfDrone.bombTimer = 0;
+        droneBombs.push({
+          x: pdfDrone.x,
+          y: pdfDrone.y + 12,
+          speed: 4.8
+        });
+      }
+
+      // ကျည်ဆန်များ ရွေ့ခြင်း
+      for (let i = bullets.length - 1; i >= 0; i--) {
+        bullets[i].y -= bullets[i].speed;
+        if (bullets[i].y < -10) bullets.splice(i, 1);
+      }
+
+      // PDF ဒရုန်းဗုံးများ ရွေ့ခြင်းနှင့် ရန်သူထိခြင်း
+      for (let i = droneBombs.length - 1; i >= 0; i--) {
+        const db = droneBombs[i];
+        db.y += db.speed;
+        let bombedEnemy = false;
+        for (let k = enemies.length - 1; k >= 0; k--) {
+          const e = enemies[k];
+          if (Math.hypot(e.x - db.x, e.y - db.y) < e.r + 14) {
+            addExplosion(e.x, e.y, "#4ade80");
+            score += e.points;
+            enemies.splice(k, 1);
+            droneBombs.splice(i, 1);
+            updateHud();
+            bombedEnemy = true;
+            break;
+          }
+        }
+        if (!bombedEnemy && db.y > height + 10) {
+          droneBombs.splice(i, 1);
+        }
+      }
+
+      // ရန်သူစစ်သား / ဘန်ကာ ထွက်လာခြင်း
+      spawnTimer++;
+      if (spawnTimer > 56) {
+        spawnTimer = 0;
+        spawnEnemyEntity();
+      }
+
+      // စစ်တပ်လေယာဉ် ထွက်လာခြင်း
+      planeTimer++;
+      if (planeTimer > 240) {
+        planeTimer = 0;
+        spawnEnemyPlane();
+      }
+
+      // ရန်သူများ ရွေ့ခြင်းနှင့် ဗုံးကြဲခြင်း
+      for (let i = enemies.length - 1; i >= 0; i--) {
+        const e = enemies[i];
+        e.x += e.vx;
+        e.y += e.type === "plane" ? e.vy : e.speed;
+
+        if (e.type === "plane" && !e.droppedBomb && Math.abs(e.x - width / 2) < 55) {
+          e.droppedBomb = true;
+          enemyBombs.push({
+            x: e.x,
+            y: e.y + 14,
+            speed: 3.6
+          });
+        }
+
+        if (e.type === "plane" && (e.x < -60 || e.x > width + 60)) {
+          enemies.splice(i, 1);
+          continue;
+        }
+
+        // ကျည်ဆန်ထိခြင်း
+        let destroyed = false;
+        for (let j = bullets.length - 1; j >= 0; j--) {
+          const dx = e.x - bullets[j].x;
+          const dy = e.y - bullets[j].y;
+          if (Math.hypot(dx, dy) < e.r + bullets[j].r) {
+            bullets.splice(j, 1);
+            e.hp--;
+            if (e.hp <= 0) {
+              addExplosion(e.x, e.y, "#fb923c");
+              enemies.splice(i, 1);
+              score += e.points;
+              updateHud();
+              destroyed = true;
+            } else {
+              addExplosion(bullets[j]?.x || e.x, e.y, "#fde047");
+            }
+            break;
+          }
+        }
+        if (destroyed) continue;
+
+        // အောက်ခြေရောက်သွားရင် အသက်လျော့ခြင်း
+        if (e.y + e.r >= height) {
+          addExplosion(e.x, height - 10, "#ef4444");
+          enemies.splice(i, 1);
+          lives--;
+          updateHud();
+          if (lives <= 0) {
+            triggerGameOver();
+            return;
+          }
+        }
+      }
+
+      // စစ်တပ်လေယာဉ်ဗုံးများ ရွေ့ခြင်းနှင့် ကျည်ဆန်နဲ့ ပစ်ဖျက်နိုင်ခြင်း / PDF ထိခြင်း
+      for (let i = enemyBombs.length - 1; i >= 0; i--) {
+        const eb = enemyBombs[i];
+        eb.y += eb.speed;
+
+        let shotDown = false;
+        for (let j = bullets.length - 1; j >= 0; j--) {
+          if (Math.hypot(eb.x - bullets[j].x, eb.y - bullets[j].y) < 12) {
+            bullets.splice(j, 1);
+            enemyBombs.splice(i, 1);
+            addExplosion(eb.x, eb.y, "#fde047");
+            score += 5;
+            updateHud();
+            shotDown = true;
+            break;
+          }
+        }
+        if (shotDown) continue;
+
+        if (Math.hypot(eb.x - pdfPlayer.x, eb.y - pdfPlayer.y) < 22) {
+          enemyBombs.splice(i, 1);
+          addExplosion(pdfPlayer.x, pdfPlayer.y, "#ef4444");
+          lives--;
+          updateHud();
+          if (lives <= 0) {
+            triggerGameOver();
+            return;
+          }
+          continue;
+        }
+
+        if (eb.y > height + 10) {
+          enemyBombs.splice(i, 1);
+        }
+      }
+
+      // အမှတ်ပြည့်လျှင် စစ်တပ်ကုန်းသိမ်းရန် အဆင့်သို့ ရောက်ရှိခြင်း
+      if (score >= targetScore) {
+        triggerCaptureHill();
+        return;
+      }
+
+      drawPdfDrone();
+      drawPdfPlayer();
+      drawBulletsAndBombs();
+      drawEnemies();
+      drawExplosions();
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    leftBtn.addEventListener("pointerdown", () => (moveLeft = true));
+    leftBtn.addEventListener("pointerup", () => (moveLeft = false));
+    leftBtn.addEventListener("pointerleave", () => (moveLeft = false));
+
+    rightBtn.addEventListener("pointerdown", () => (moveRight = true));
+    rightBtn.addEventListener("pointerup", () => (moveRight = false));
+    rightBtn.addEventListener("pointerleave", () => (moveRight = false));
+
+    fireBtn.addEventListener("pointerdown", playerShoot);
+
+    canvas.addEventListener("touchmove", (e) => {
+      if (!gameRunning) return;
+      const rect = canvas.getBoundingClientRect();
+      pdfPlayer.x = e.touches[0].clientX - rect.left;
+      playerShoot();
+    }, { passive: true });
+
+    canvas.addEventListener("pointerdown", (e) => {
+      if (!gameRunning) return;
+      const rect = canvas.getBoundingClientRect();
+      pdfPlayer.x = e.clientX - rect.left;
+      playerShoot();
+    });
+
+    startBtn.addEventListener("click", startGame);
+  </script>
+</body>
+</html>
